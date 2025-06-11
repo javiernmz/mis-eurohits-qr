@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador QR Musical - Estilo Hitster</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 5px;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .tab.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .tab-content {
+            display: none;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .qr-result {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+        
+        .qr-result canvas {
+            margin: 20px 0;
+            border-radius: 10px;
+            background: white;
+            padding: 20px;
+        }
+        
+        .scanner-container {
+            text-align: center;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .song-info {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .song-info h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .year-reveal {
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .spotify-link {
+            display: inline-block;
+            background: #1db954;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .spotify-link:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Generador QR Eurovisión</h1>
+            <p>Crea y escanea códigos QR de canciones de Eurovisión al estilo Hitster</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('generate')">Generar QR</div>
+            <div class="tab" onclick="switchTab('scan')">Escanear QR</div>
+        </div>
+        
+        <div id="generate" class="tab-content active">
+            <div class="instructions">
+                <h3>📝 Instrucciones:</h3>
+                <p>1. Busca una canción de Eurovisión en Spotify y copia su enlace<br>
+                2. Completa todos los datos de la canción (país, año, puntos, etc.)<br>
+                3. Genera el código QR para usar en tus partidas de Eurovisión</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="spotifyUrl">🔗 Enlace de Spotify:</label>
+                <input type="url" id="spotifyUrl" placeholder="https://open.spotify.com/track/..." />
+            </div>
+            
+            <div class="form-group">
+                <label for="songTitle">🎤 Título de la canción:</label>
+                <input type="text" id="songTitle" placeholder="Ej: Waterloo" />
+            </div>
+            
+            <div class="form-group">
+                <label for="artist">👨‍🎤 Artista:</label>
+                <input type="text" id="artist" placeholder="Ej: ABBA" />
+            </div>
+            
+            <div class="form-group">
+                <label for="country">🏳️ País:</label>
+                <input type="text" id="country" placeholder="Ej: Suecia" />
+            </div>
+            
+            <div class="form-group">
+                <label for="year">📅 Año:</label>
+                <input type="number" id="year" min="1956" max="2025" placeholder="Ej: 1974" />
+            </div>
+            
+            <div class="form-group">
+                <label for="points">🏆 Puntos:</label>
+                <input type="number" id="points" min="0" placeholder="Ej: 372" />
+            </div>
+            
+            <div class="form-group">
+                <label for="position">🥇 Clasificación:</label>
+                <input type="number" id="position" min="1" placeholder="Ej: 1 (ganador)" />
+            </div>
+            
+            <div class="form-group">
+                <label for="difficulty">🎯 Dificultad:</label>
+                <select id="difficulty">
+                    <option value="easy">Fácil (muy conocida)</option>
+                    <option value="medium">Media (conocida)</option>
+                    <option value="hard">Difícil (poco conocida)</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="generateQR()">🎵 Generar Código QR</button>
+            
+            <div id="qrResult" class="qr-result" style="display: none;">
+                <h3>¡Código QR Generado!</h3>
+                <canvas id="qrCanvas"></canvas>
+                <p>Escanea este código con la pestaña "Escanear QR" para probar</p>
+                <button class="btn" onclick="downloadQR()">💾 Descargar QR</button>
+            </div>
+        </div>
+        
+        <div id="scan" class="tab-content">
+            <div class="instructions">
+                <h3>📱 Instrucciones:</h3>
+                <p>1. Haz clic en "Iniciar Escáner"<br>
+                2. Apunta la cámara al código QR<br>
+                3. ¡Descubre el año y juega como en Hitster!</p>
+            </div>
+            
+            <div class="scanner-container">
+                <button class="btn" onclick="startScanner()">📷 Iniciar Escáner</button>
+                <button class="btn" onclick="stopScanner()" style="background: #e74c3c;">⏹️ Parar</button>
+                
+                <video id="video" style="display: none;"></video>
+                
+                <div id="scanResult" class="song-info" style="display: none;">
+                    <h3>🎵 Información de la Canción</h3>
+                    <div id="songDetails"></div>
+                    <button class="btn" onclick="revealYear()" id="revealBtn">🎯 ¡Revelar Año!</button>
+                    <div id="yearReveal" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let qrScanner = null;
+        let currentSongData = null;
+        
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Stop scanner if switching away from scan tab
+            if (tabName !== 'scan' && qrScanner) {
+                stopScanner();
+            }
+        }
+        
+        function generateQR() {
+            const spotifyUrl = document.getElementById('spotifyUrl').value;
+            const songTitle = document.getElementById('songTitle').value;
+            const artist = document.getElementById('artist').value;
+            const country = document.getElementById('country').value;
+            const year = document.getElementById('year').value;
+            const points = document.getElementById('points').value;
+            const position = document.getElementById('position').value;
+            const difficulty = document.getElementById('difficulty').value;
+            
+            if (!spotifyUrl || !songTitle || !artist || !country || !year) {
+                alert('Por favor, completa todos los campos obligatorios (URL, título, artista, país y año)');
+                return;
+            }
+            
+            const songData = {
+                spotifyUrl,
+                songTitle,
+                artist,
+                country,
+                year: parseInt(year),
+                points: points ? parseInt(points) : null,
+                position: position ? parseInt(position) : null,
+                difficulty,
+                timestamp: Date.now()
+            };
+            
+            const qrData = JSON.stringify(songData);
+            
+            try {
+                const canvas = document.getElementById('qrCanvas');
+                const qr = new QRious({
+                    element: canvas,
+                    value: qrData,
+                    size: 300,
+                    foreground: '#000000',
+                    background: '#FFFFFF'
+                });
+                
+                document.getElementById('qrResult').style.display = 'block';
+            } catch (error) {
+                console.error('Error generating QR:', error);
+                alert('Error al generar el código QR');
+            }
+        }
+        
+        function downloadQR() {
+            const canvas = document.getElementById('qrCanvas');
+            const link = document.createElement('a');
+            link.download = 'hitster-qr.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        async function startScanner() {
+            try {
+                const video = document.getElementById('video');
+                video.style.display = 'block';
+                
+                qrScanner = new QrScanner(video, result => {
+                    try {
+                        const songData = JSON.parse(result.data);
+                        displaySongInfo(songData);
+                        stopScanner();
+                    } catch (e) {
+                        console.error('Error parsing QR data:', e);
+                        alert('Código QR no válido para este juego');
+                    }
+                }, {
+                    highlightScanRegion: true,
+                    highlightCodeOutline: true,
+                });
+                
+                await qrScanner.start();
+            } catch (error) {
+                console.error('Error starting scanner:', error);
+                alert('Error al acceder a la cámara. Asegúrate de dar permisos.');
+            }
+        }
+        
+        function stopScanner() {
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner.destroy();
+                qrScanner = null;
+                document.getElementById('video').style.display = 'none';
+            }
+        }
+        
+        function displaySongInfo(songData) {
+            currentSongData = songData;
+            
+            let detailsHtml = `
+                <p><strong>🎤 Canción:</strong> ${songData.songTitle}</p>
+                <p><strong>👨‍🎤 Artista:</strong> ${songData.artist}</p>
+                <p><strong>🏳️ País:</strong> ${songData.country}</p>
+                <p><strong>🎯 Dificultad:</strong> ${songData.difficulty === 'easy' ? 'Fácil' : songData.difficulty === 'medium' ? 'Media' : 'Difícil'}</p>
+            `;
+            
+            if (songData.points !== null && songData.points !== undefined) {
+                detailsHtml += `<p><strong>🏆 Puntos:</strong> ${songData.points}</p>`;
+            }
+            
+            if (songData.position !== null && songData.position !== undefined) {
+                detailsHtml += `<p><strong>🥇 Clasificación:</strong> ${songData.position}º</p>`;
+            }
+            
+            detailsHtml += `<a href="${songData.spotifyUrl}" target="_blank" class="spotify-link">🎵 Escuchar en Spotify</a>`;
+            
+            document.getElementById('songDetails').innerHTML = detailsHtml;
+            document.getElementById('scanResult').style.display = 'block';
+            document.getElementById('revealBtn').style.display = 'block';
+            document.getElementById('yearReveal').style.display = 'none';
+        }
+        
+        function revealYear() {
+            if (currentSongData) {
+                document.getElementById('yearReveal').innerHTML = `
+                    <div class="year-reveal">
+                        🎯 ¡Año de lanzamiento: ${currentSongData.year}!
+                    </div>
+                `;
+                document.getElementById('yearReveal').style.display = 'block';
+                document.getElementById('revealBtn').style.display = 'none';
+            }
+        }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopScanner();
+        });
+    </script>
+</body>
+</html>
